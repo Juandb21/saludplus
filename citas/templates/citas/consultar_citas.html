@@ -1,0 +1,330 @@
+{% extends "citas/base.html" %}
+
+{% block title %}Mis Próximas Citas - Clínica SaludPlus{% endblock %}
+
+{% block extra_css %}
+<style>
+    .patient-page {
+        max-width: 1240px;
+        margin: 0 auto;
+    }
+
+    .patient-navbar {
+        width: 100%;
+        padding: 10px 4px;
+    }
+
+    .patient-back {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #475569;
+        text-decoration: none;
+    }
+
+    .patient-back:hover {
+        background: #FCE4EC;
+        color: #E91E63;
+    }
+
+    .patient-nav-title {
+        margin: 0;
+        font-size: 1.8rem;
+        line-height: 1;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .patient-nav-subtitle {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+
+    .patient-info-card {
+        border: none;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #E91E63 0%, #C2185B 65%, #AD1457 100%);
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(233, 30, 99, 0.25);
+    }
+
+    .patient-info-label {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.9rem;
+        margin-bottom: 0.6rem;
+    }
+
+    .patient-info-name {
+        font-size: 1.8rem;
+        font-weight: 700;
+        line-height: 1.1;
+        margin-bottom: 1rem;
+    }
+
+    .patient-info-line {
+        font-size: 0.95rem;
+        margin-bottom: 0.45rem;
+    }
+
+    .patient-info-line strong {
+        font-weight: 600;
+    }
+
+    .patient-total-label {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 0.2rem;
+    }
+
+    .patient-total-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1;
+        color: #ffffff;
+    }
+
+    .next-card {
+        border: 1px solid #d9e0eb;
+        border-radius: 16px;
+        background: #ffffff;
+        overflow: hidden;
+    }
+
+    .next-card-header {
+        padding: 1.5rem 1.6rem;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+    }
+
+    .next-card-header i {
+        color: #E91E63;
+    }
+
+    .appointment-item {
+        padding: 1.4rem 1.6rem;
+        border-bottom: 1px solid #eef2f7;
+    }
+
+    .appointment-item:last-child {
+        border-bottom: none;
+    }
+
+    .date-badge {
+        width: 84px;
+        min-width: 84px;
+        border-radius: 16px;
+        background: #FCE4EC;
+        text-align: center;
+        padding: 10px 8px;
+    }
+
+    .date-badge-month {
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #E91E63;
+        line-height: 1;
+    }
+
+    .date-badge-day {
+        margin-top: 4px;
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #E91E63;
+        line-height: 1;
+    }
+
+    .doctor-line {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .doctor-name {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.1;
+    }
+
+    .status-pill {
+        border-radius: 999px;
+        padding: 4px 14px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .status-programada {
+        background: #FCE4EC;
+        color: #E91E63;
+    }
+
+    .status-confirmada {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .status-realizada {
+        background: #cffafe;
+        color: #0e7490;
+    }
+
+    .status-cancelada {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .appointment-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        color: #475569;
+        font-size: 0.9rem;
+    }
+
+    .appointment-meta i {
+        margin-right: 6px;
+        color: #94a3b8;
+    }
+
+    .appointment-hour {
+        color: #E91E63;
+        font-weight: 700;
+        font-size: 2rem;
+        line-height: 1;
+    }
+
+    .empty-state {
+        padding: 3rem 1.5rem;
+        text-align: center;
+        color: #64748b;
+    }
+
+    .empty-state i {
+        font-size: 3.2rem;
+        color: #cbd5e1;
+        margin-bottom: 0.6rem;
+    }
+
+    @media (max-width: 768px) {
+        .patient-nav-title {
+            font-size: 2.2rem;
+        }
+
+        .patient-info-name {
+            font-size: 2.2rem;
+        }
+
+        .patient-total-number {
+            font-size: 3.2rem;
+        }
+
+        .doctor-name {
+            font-size: 1.8rem;
+        }
+
+        .next-card-header {
+            font-size: 1.6rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block navbar_content %}
+<div class="container-fluid px-4">
+    <div class="patient-page">
+        <div class="patient-navbar d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <a href="{% url 'index' %}" class="patient-back" title="Volver">
+                    <i class="bi bi-arrow-left" style="font-size: 1.45rem;"></i>
+                </a>
+                <div>
+                    <h1 class="patient-nav-title">Mis Próximas Citas</h1>
+                    <p class="patient-nav-subtitle">{{ paciente.nombre_completo }}</p>
+                </div>
+            </div>
+            <a href="{% url 'logout' %}" class="btn btn-outline-secondary" style="border:none;background:transparent;">
+                <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="patient-page">
+    <div class="card patient-info-card mb-4">
+        <div class="card-body px-4 py-4">
+            <div class="row align-items-center g-3">
+                <div class="col-md-8">
+                    <div class="patient-info-label">Información del Paciente</div>
+                    <div class="patient-info-name">{{ paciente.nombre_completo }}</div>
+                    {% if paciente.get_edad %}<div class="patient-info-line"><strong>Edad:</strong> {{ paciente.get_edad }} años</div>{% endif %}
+                    <div class="patient-info-line"><strong>Cédula:</strong> {{ paciente.documento_identidad }}</div>
+                    <div class="patient-info-line"><strong>Teléfono:</strong> {{ paciente.telefono }}</div>
+                    <div class="patient-info-line mb-0"><strong>Email:</strong> {{ paciente.correo }}</div>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="patient-total-label">Próximas Citas</div>
+                    <div class="patient-total-number">{{ citas|length }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="next-card mb-3">
+        <div class="next-card-header">
+            <i class="bi bi-calendar2-check"></i>
+            <span>Próximas Citas Programadas</span>
+        </div>
+
+        {% if citas %}
+            <div class="card-body p-0">
+                {% for cita in citas %}
+                    <div class="appointment-item {% if cita.estado == 'cancelada' %}opacity-50{% endif %}">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="date-badge">
+                                <div class="date-badge-month">{{ cita.fecha|date:"M" }}</div>
+                                <div class="date-badge-day">{{ cita.fecha|date:"d" }}</div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="doctor-line">
+                                    <span class="doctor-name">Dr. {{ cita.doctor.nombre }}</span>
+                                    <span class="status-pill status-{{ cita.estado }}">{{ cita.get_estado_display }}</span>
+                                </div>
+                                <div style="margin-bottom: 8px; color: #64748b; font-size: 1rem;">
+                                    <i class="bi bi-stethoscope" style="margin-right: 6px;"></i><strong>{{ cita.doctor.get_especialidad_display }}</strong>
+                                </div>
+                                <div class="appointment-meta">
+                                    <span>
+                                        <i class="bi bi-calendar3"></i>{{ cita.fecha|date:"l, d \d\e F \d\e Y" }}
+                                    </span>
+                                    <span class="appointment-hour">
+                                        <i class="bi bi-clock"></i>{{ cita.hora|time:"H:i" }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="bi bi-calendar-x"></i>
+                <p class="mb-0">No tiene citas programadas por el momento</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

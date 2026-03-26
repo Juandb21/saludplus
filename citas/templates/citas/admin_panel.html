@@ -1,0 +1,406 @@
+{% extends "citas/base.html" %}
+
+{% block title %}Panel de Administración - Clínica SaludPlus{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-page .section-card {
+        border-radius: 16px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+    }
+
+    .admin-page .section-card .card-header {
+        background: #ffffff;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 1.5rem;
+    }
+
+    .admin-page .stat-card-custom {
+        border-radius: 14px;
+        border: 1px solid #e5e7eb;
+        min-height: 110px;
+        background: #ffffff;
+    }
+
+    .admin-page .stat-icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .admin-page .doctor-row {
+        padding: 1.35rem 1.5rem;
+    }
+
+    .admin-page .schedule-pill {
+        background: #f3f4f6;
+        border-radius: 8px;
+        padding: 0.6rem 0.8rem;
+        border: 1px solid #eef2f7;
+    }
+
+    .admin-page .register-panel {
+        background: #fbfdff;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 1.35rem 1.5rem;
+    }
+
+    .admin-page .schedule-builder-item {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 0.55rem 0.7rem;
+        background: #ffffff;
+    }
+
+    .admin-page .edit-schedule-box {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #fafafa;
+        padding: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+        .admin-page .doctor-row,
+        .admin-page .register-panel {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <div class="mb-4">
+        <div>
+            <h1 class="mb-1" style="font-weight:700;">
+                <span class="me-2" style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:#E91E63;color:white;">
+                    <i class="bi bi-speedometer2"></i>
+                </span>
+                Panel de Administración
+            </h1>
+            <p class="text-muted mb-0">Bienvenido, {{ user.first_name|default:user.username }} {{ user.last_name }}</p>
+        </div>
+    </div>
+
+    <div class="card section-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0" style="font-weight:700;">Gestión de Médicos</h4>
+            <button id="toggleRegistroMedico" class="btn btn-primary" type="button" style="border-radius:12px;padding:0.6rem 1.1rem;font-weight:600;">
+                <i class="bi bi-person-plus"></i> Agregar Médico
+            </button>
+        </div>
+
+        <div id="registroMedicoPanel" class="register-panel d-none">
+            <form method="post" id="registroMedicoForm" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_doctor">
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nombre del Médico *</label>
+                        <input type="text" class="form-control" name="nombre" placeholder="Dr. Juan Pérez" required>
+
+                        <div class="row g-2 mt-1">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Usuario *</label>
+                                <input type="text" class="form-control" name="username" placeholder="juan.perez" autocomplete="off" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Contraseña *</label>
+                                <input type="password" class="form-control" name="password" placeholder="Mínimo 6 caracteres" minlength="6" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Especialidad *</label>
+                        <select class="form-select" name="especialidad" required>
+                            <option value="medicina_general">Medicina General</option>
+                            <option value="pediatria">Pediatría</option>
+                            <option value="cardiologia">Odontología</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <label class="form-label fw-semibold">Horario de Atención</label>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-3">
+                            <select id="nuevoDiaSemana" class="form-select">
+                                <option value="">Seleccionar día</option>
+                                <option value="0">Lunes</option>
+                                <option value="1">Martes</option>
+                                <option value="2">Miércoles</option>
+                                <option value="3">Jueves</option>
+                                <option value="4">Viernes</option>
+                                <option value="5">Sábado</option>
+                                <option value="6">Domingo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input id="nuevaHoraInicio" type="time" class="form-control" step="3600" placeholder="Hora inicio">
+                        </div>
+                        <div class="col-md-3">
+                            <input id="nuevaHoraFin" type="time" class="form-control" step="3600" placeholder="Hora fin">
+                        </div>
+                        <div class="col-md-3 d-grid">
+                            <button id="agregarFilaHorario" type="button" class="btn btn-primary">
+                                <i class="bi bi-plus-lg"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="listaHorariosNuevos" class="mt-3 d-grid gap-2"></div>
+                <div id="inputsHorariosNuevos"></div>
+
+                <div class="d-flex gap-2 mt-4 pt-3 border-top">
+                    <button type="submit" class="btn btn-primary px-4" style="font-weight:600;">Registrar Médico</button>
+                    <button id="cancelarRegistroMedico" type="button" class="btn btn-secondary">Cancelar</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card-body p-0">
+            {% if medicos %}
+                {% for doctor in medicos %}
+                    <div class="doctor-row {% if not forloop.last %}border-bottom{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                            <div>
+                                <div class="d-flex align-items-center mb-2 flex-wrap gap-2">
+                                    <span style="font-weight:700;font-size:1.6rem;color:#111827;line-height:1.1;">Dr. {{ doctor.nombre }}</span>
+                                    <span class="badge" style="background:#FCE4EC;color:#E91E63;font-weight:600;border-radius:999px;font-size:0.95rem;padding:5px 10px;">
+                                        {{ doctor.get_especialidad_display }}
+                                    </span>
+                                </div>
+                                <div class="text-muted" style="font-weight:600;">Horario de Atención:</div>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#editarHorarios{{ doctor.id }}" aria-expanded="false" style="border-radius:10px;">
+                                <i class="bi bi-pencil-square"></i> Editar horarios
+                            </button>
+                        </div>
+
+                        {% if doctor.horarios.all %}
+                            <div class="row g-2 mt-2">
+                                {% for horario in doctor.horarios.all %}
+                                    <div class="col-md-6">
+                                        <div class="schedule-pill d-flex justify-content-between align-items-center">
+                                            <span>
+                                                <i class="bi bi-calendar3 me-1" style="color:#6b7280;"></i>
+                                                <strong>{{ horario.get_dia_semana_display }}:</strong>
+                                                {{ horario.hora_inicio|time:"H:i" }} - {{ horario.hora_fin|time:"H:i" }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <small class="text-muted d-block mt-2">Sin horarios configurados.</small>
+                        {% endif %}
+
+                        <div class="collapse mt-3" id="editarHorarios{{ doctor.id }}">
+                            <div class="edit-schedule-box">
+                                <div class="fw-semibold mb-2">Editar y eliminar días existentes</div>
+
+                                {% if doctor.horarios.all %}
+                                    <div class="d-grid gap-2">
+                                        {% for horario in doctor.horarios.all %}
+                                            <div class="row g-2 align-items-center">
+                                                <div class="col-md-3">
+                                                    <div class="form-control bg-white">{{ horario.get_dia_semana_display }}</div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <form method="post" class="row g-2">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="action" value="update_horario">
+                                                        <input type="hidden" name="horario_id" value="{{ horario.id }}">
+                                                        <div class="col-5">
+                                                            <input type="time" name="hora_inicio" value="{{ horario.hora_inicio|time:'H:i' }}" class="form-control" step="3600" required>
+                                                        </div>
+                                                        <div class="col-5">
+                                                            <input type="time" name="hora_fin" value="{{ horario.hora_fin|time:'H:i' }}" class="form-control" step="3600" required>
+                                                        </div>
+                                                        <div class="col-2 d-grid">
+                                                            <button type="submit" class="btn btn-outline-primary btn-sm">Guardar</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                                <div class="col-md-3 d-grid">
+                                                    <form method="post" onsubmit="return confirm('¿Eliminar este día del horario?');">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="action" value="delete_horario">
+                                                        <input type="hidden" name="horario_id" value="{{ horario.id }}">
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm">Eliminar día</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                <form method="post" class="row g-2 mt-3 pt-3 border-top">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="create_horario">
+                                    <input type="hidden" name="doctor_id" value="{{ doctor.id }}">
+                                    <div class="col-md-3">
+                                        <select class="form-select" name="dia_semana" required>
+                                            <option value="">Día</option>
+                                            <option value="0">Lunes</option>
+                                            <option value="1">Martes</option>
+                                            <option value="2">Miércoles</option>
+                                            <option value="3">Jueves</option>
+                                            <option value="4">Viernes</option>
+                                            <option value="5">Sábado</option>
+                                            <option value="6">Domingo</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="time" name="hora_inicio" class="form-control" step="3600" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="time" name="hora_fin" class="form-control" step="3600" required>
+                                    </div>
+                                    <div class="col-md-3 d-grid">
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-plus-lg"></i> Agregar día
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info m-3">
+                    <i class="bi bi-info-circle"></i> No hay médicos registrados.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const toggleBtn = document.getElementById('toggleRegistroMedico');
+    const panel = document.getElementById('registroMedicoPanel');
+    const cancelBtn = document.getElementById('cancelarRegistroMedico');
+    const addScheduleBtn = document.getElementById('agregarFilaHorario');
+    const dayInput = document.getElementById('nuevoDiaSemana');
+    const startInput = document.getElementById('nuevaHoraInicio');
+    const endInput = document.getElementById('nuevaHoraFin');
+    const list = document.getElementById('listaHorariosNuevos');
+    const hiddenInputs = document.getElementById('inputsHorariosNuevos');
+
+    if (!toggleBtn || !panel) {
+        return;
+    }
+
+    const setPanelState = (open) => {
+        panel.classList.toggle('d-none', !open);
+        toggleBtn.innerHTML = open
+            ? '<i class="bi bi-x-lg"></i> Cerrar registro'
+            : '<i class="bi bi-person-plus"></i> Agregar Médico';
+    };
+
+    toggleBtn.addEventListener('click', () => {
+        setPanelState(panel.classList.contains('d-none'));
+    });
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => setPanelState(false));
+    }
+
+    const buildScheduleText = (dayValue, start, end) => {
+        const dayText = dayInput.querySelector(`option[value="${dayValue}"]`)?.textContent || 'Día';
+        return `${dayText}: ${start} - ${end}`;
+    };
+
+    const esHoraEnPunto = (value) => {
+        if (!value || value.length < 5) {
+            return false;
+        }
+        return value.slice(3, 5) === '00';
+    };
+
+    const addScheduleItem = () => {
+        const dayValue = dayInput.value;
+        const start = startInput.value;
+        const end = endInput.value;
+
+        if (!dayValue || !start || !end) {
+            alert('Complete día, hora de inicio y hora de fin.');
+            return;
+        }
+
+        if (start >= end) {
+            alert('La hora de inicio debe ser menor que la hora de fin.');
+            return;
+        }
+
+        if (!esHoraEnPunto(start) || !esHoraEnPunto(end)) {
+            alert('Solo se permiten horas en punto, por ejemplo 08:00 o 16:00.');
+            return;
+        }
+
+        if (list.querySelector(`[data-dia="${dayValue}"]`)) {
+            alert('Ese día ya fue agregado. Si desea cambiarlo, elimínelo y vuelva a agregarlo.');
+            return;
+        }
+
+        const item = document.createElement('div');
+        item.className = 'schedule-builder-item d-flex justify-content-between align-items-center';
+        item.dataset.dia = dayValue;
+
+        const text = document.createElement('span');
+        text.textContent = buildScheduleText(dayValue, start, end);
+        item.appendChild(text);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn btn-sm btn-outline-danger';
+        removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+        removeBtn.addEventListener('click', () => item.remove());
+        item.appendChild(removeBtn);
+
+        const hiddenDay = document.createElement('input');
+        hiddenDay.type = 'hidden';
+        hiddenDay.name = 'dia_semana[]';
+        hiddenDay.value = dayValue;
+        item.appendChild(hiddenDay);
+
+        const hiddenStart = document.createElement('input');
+        hiddenStart.type = 'hidden';
+        hiddenStart.name = 'hora_inicio[]';
+        hiddenStart.value = start;
+        item.appendChild(hiddenStart);
+
+        const hiddenEnd = document.createElement('input');
+        hiddenEnd.type = 'hidden';
+        hiddenEnd.name = 'hora_fin[]';
+        hiddenEnd.value = end;
+        item.appendChild(hiddenEnd);
+
+        list.appendChild(item);
+
+        dayInput.value = '';
+        startInput.value = '';
+        endInput.value = '';
+    };
+
+    if (addScheduleBtn) {
+        addScheduleBtn.addEventListener('click', addScheduleItem);
+    }
+
+    if (hiddenInputs) {
+        hiddenInputs.innerHTML = '';
+    }
+})();
+</script>
+{% endblock %}

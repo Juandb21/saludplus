@@ -1,0 +1,617 @@
+{% extends "citas/base.html" %}
+
+{% block title %}Agendar Cita - Clínica SaludPlus{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-calendar-check"></i> Agendar Nueva Cita</h1>
+    <a href="{% url 'recepcion' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Volver
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body p-5">
+                <form method="post" id="agendarForm">
+                    {% csrf_token %}
+
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        Las citas tienen duración de <strong>30 minutos</strong>. 
+                        Seleccione primero la fecha para ver el horario disponible del médico.
+                    </div>
+
+                    <!-- Búsqueda de Paciente -->
+                    <div class="mb-4">
+                        <h5>1. Seleccionar Paciente</h5>
+                        <div class="mb-3 position-relative">
+                            <label for="cedula_paciente" class="form-label">
+                                Búsqueda de Paciente <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group input-group-lg">
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="cedula_paciente" 
+                                    name="cedula_paciente" 
+                                    placeholder="Ingrese cédula o nombre del paciente"
+                                    value="{{ request.POST.cedula_paciente|default:'' }}"
+                                    autocomplete="off"
+                                >
+                                <button class="btn btn-outline-secondary" type="button" id="togglePacienteDropdown" title="Ver todos los pacientes">
+                                    <i class="bi bi-chevron-down"></i>
+                                </button>
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            </div>
+                            
+                            <!-- Dropdown de resultados -->
+                            <div id="pacienteDropdown" class="dropdown-search" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 0.375rem 0.375rem; max-height: 300px; overflow-y: auto; z-index: 1000;">
+                                <div id="pacienteResultados" class="dropdown-search-results"></div>
+                            </div>
+
+                            <input type="hidden" id="paciente_id" name="paciente_id" value="">
+                            
+                            <div id="pacienteInfo" class="mt-3 p-3 bg-light rounded alert alert-success" style="display: none;">
+                                <strong><i class="bi bi-check-circle"></i> Paciente Seleccionado:</strong><br>
+                                <span id="pacienteName"></span>
+                            </div>
+                            <div id="pacienteMenorAlerta" class="mt-3 alert alert-warning" style="display: none;">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                Este paciente es <strong>menor de edad</strong>. Solo se puede agendar cita con especialista en <strong>Pediatría</strong>.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Búsqueda de Doctor -->
+                    <div class="mb-4">
+                        <h5>2. Seleccionar Médico</h5>
+                        <div class="mb-3 position-relative">
+                            <label for="nombre_doctor" class="form-label">
+                                Búsqueda de Médico <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group input-group-lg">
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="nombre_doctor" 
+                                    name="nombre_doctor" 
+                                    placeholder="Ingrese nombre del médico"
+                                    value="{{ request.POST.nombre_doctor|default:'' }}"
+                                    autocomplete="off"
+                                >
+                                <button class="btn btn-outline-secondary" type="button" id="toggleDoctorDropdown" title="Ver todos los médicos">
+                                    <i class="bi bi-chevron-down"></i>
+                                </button>
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            </div>
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            </div>
+
+                            <!-- Dropdown de resultados -->
+                            <div id="doctorDropdown" class="dropdown-search" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 0.375rem 0.375rem; max-height: 300px; overflow-y: auto; z-index: 1000;">
+                                <div id="doctorResultados" class="dropdown-search-results"></div>
+                            </div>
+
+                            <input type="hidden" id="doctor_id" name="doctor_id" value="">
+                            
+                            <div id="doctorInfo" class="mt-3 p-3 bg-light rounded alert alert-success" style="display: none;">
+                                <strong><i class="bi bi-check-circle"></i> Médico Seleccionado:</strong><br>
+                                <span id="doctorName"></span><br>
+                                <small class="text-muted">Especialidad: <span id="doctorSpecialty"></span></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selección de Fecha -->
+                    <div class="mb-4">
+                        <h5>3. Seleccionar Fecha</h5>
+                        <div class="mb-3">
+                            <label for="fecha" class="form-label">
+                                Fecha <span class="text-danger">*</span>
+                            </label>
+                            <input 
+                                type="date" 
+                                class="form-control form-control-lg" 
+                                id="fecha" 
+                                name="fecha"
+                                value="{{ request.POST.fecha|default:'' }}"
+                            >
+                            <small class="text-muted">Seleccione la fecha para ver disponibilidad</small>
+                        </div>
+                    </div>
+
+                    <!-- Selección de Hora -->
+                    <div class="mb-4">
+                        <h5>4. Seleccionar Hora</h5>
+                        <div class="mb-3">
+                            <label for="hora" class="form-label">
+                                Hora <span class="text-danger">*</span>
+                            </label>
+                            <select 
+                                class="form-select form-select-lg" 
+                                id="hora" 
+                                name="hora" 
+                                required 
+                                disabled
+                            >
+                                <option value="">Seleccione una hora</option>
+                            </select>
+                            <div id="horasInfo" class="mt-3" style="display: none;">
+                                <div class="alert alert-primary">
+                                    <strong id="horasCount"></strong> horas disponibles en este día
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
+                            <i class="bi bi-calendar-check"></i> Agendar Cita
+                        </button>
+                        <a href="{% url 'recepcion' %}" class="btn btn-outline-secondary btn-lg">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen -->
+    <div class="col-lg-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">Resumen</h5>
+                <hr>
+                <div class="mb-3">
+                    <strong>Paciente:</strong>
+                    <div id="resumenPaciente" class="text-muted">No seleccionado</div>
+                </div>
+                <div class="mb-3">
+                    <strong>Médico:</strong>
+                    <div id="resumenDoctor" class="text-muted">No seleccionado</div>
+                </div>
+                <div class="mb-3">
+                    <strong>Fecha:</strong>
+                    <div id="resumenFecha" class="text-muted">No seleccionada</div>
+                </div>
+                <div class="mb-3">
+                    <strong>Hora:</strong>
+                    <div id="resumenHora" class="text-muted">No seleccionada</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dropdown-search {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dropdown-search-results {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .dropdown-item-search {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background-color 0.2s;
+    }
+    
+    .dropdown-item-search:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .dropdown-item-search.active {
+        background-color: #e7f3ff;
+        border-left: 3px solid #0d6efd;
+    }
+    
+    .dropdown-item-search strong {
+        display: block;
+        color: #333;
+    }
+    
+    .dropdown-item-search small {
+        display: block;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .dropdown-item-search:last-child {
+        border-bottom: none;
+        border-radius: 0 0 0.375rem 0.375rem;
+    }
+</style>
+
+<script>
+(function () {
+    const cedulaInput = document.getElementById('cedula_paciente');
+    const paciente_idInput = document.getElementById('paciente_id');
+    const nombreDoctorInput = document.getElementById('nombre_doctor');
+    const doctor_idInput = document.getElementById('doctor_id');
+    const fechaInput = document.getElementById('fecha');
+    const horaSelect = document.getElementById('hora');
+
+    const pacienteDropdown = document.getElementById('pacienteDropdown');
+    const pacienteResultados = document.getElementById('pacienteResultados');
+    const doctorDropdown = document.getElementById('doctorDropdown');
+    const doctorResultados = document.getElementById('doctorResultados');
+
+    let pacienteSeleccionado = null;
+    let doctorSeleccionado = null;
+    let timeoutBusqueda = null;
+
+    // ====== BÚSQUEDA DE PACIENTES ======
+    cedulaInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        // Limpiar valores
+        if (!query) {
+            pacienteDropdown.style.display = 'none';
+            pacienteResultados.innerHTML = '';
+            document.getElementById('pacienteInfo').style.display = 'none';
+            document.getElementById('pacienteMenorAlerta').style.display = 'none';
+            document.getElementById('resumenPaciente').textContent = 'No seleccionado';
+            document.getElementById('resumenPaciente').classList.add('text-muted');
+            paciente_idInput.value = '';
+            pacienteSeleccionado = null;
+            return;
+        }
+
+        // Debounce: esperar a que dejen de escribir
+        clearTimeout(timeoutBusqueda);
+        timeoutBusqueda = setTimeout(() => {
+            // Buscar pacientes por AJAX
+            fetch('{% url "buscar_pacientes" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: new URLSearchParams({'query': query})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.pacientes && data.pacientes.length > 0) {
+                    pacienteResultados.innerHTML = '';
+                    data.pacientes.forEach((paciente, index) => {
+                        const item = document.createElement('div');
+                        item.className = 'dropdown-item-search';
+                        item.innerHTML = `
+                            <strong>${paciente.nombre} - ${paciente.documento}</strong>
+                            <small>Teléfono: ${paciente.telefono || 'N/A'}</small>
+                        `;
+                        item.addEventListener('click', () => {
+                            seleccionarPaciente(paciente);
+                        });
+                        pacienteResultados.appendChild(item);
+                    });
+                    pacienteDropdown.style.display = 'block';
+                } else {
+                    pacienteResultados.innerHTML = '<div class="dropdown-item-search text-muted">No se encontraron pacientes</div>';
+                    pacienteDropdown.style.display = 'block';
+                }
+            })
+            .catch(error => console.error('Error al buscar pacientes:', error));
+        }, 300);
+    });
+
+    function seleccionarPaciente(paciente) {
+        pacienteSeleccionado = paciente;
+        paciente_idInput.value = paciente.id;
+        cedulaInput.value = `${paciente.nombre} - ${paciente.documento}`;
+        pacienteDropdown.style.display = 'none';
+        
+        // Mostrar información
+        document.getElementById('pacienteInfo').style.display = 'block';
+        document.getElementById('pacienteName').textContent = `${paciente.nombre} - ${paciente.documento}`;
+        document.getElementById('resumenPaciente').textContent = `${paciente.nombre} - ${paciente.documento}`;
+        document.getElementById('resumenPaciente').classList.remove('text-muted');
+
+        // Mostrar alerta si es menor de edad
+        if (paciente.es_menor) {
+            document.getElementById('pacienteMenorAlerta').style.display = 'block';
+        } else {
+            document.getElementById('pacienteMenorAlerta').style.display = 'none';
+        }
+
+        // Actualizar búsqueda de doctores si existe
+        if (nombreDoctorInput.value.trim()) {
+            buscarDoctores(nombreDoctorInput.value.trim());
+        }
+    }
+
+    // ====== BÚSQUEDA DE DOCTORES ======
+    nombreDoctorInput.addEventListener('input', function() {
+        const nombre = this.value.trim();
+        
+        if (!nombre) {
+            doctorDropdown.style.display = 'none';
+            doctorResultados.innerHTML = '';
+            document.getElementById('doctorInfo').style.display = 'none';
+            document.getElementById('resumenDoctor').textContent = 'No seleccionado';
+            document.getElementById('resumenDoctor').classList.add('text-muted');
+            doctor_idInput.value = '';
+            doctorSeleccionado = null;
+            return;
+        }
+
+        clearTimeout(timeoutBusqueda);
+        timeoutBusqueda = setTimeout(() => {
+            buscarDoctores(nombre);
+        }, 300);
+    });
+
+    function buscarDoctores(nombre) {
+        const formData = new URLSearchParams({
+            'nombre': nombre
+        });
+
+        if (pacienteSeleccionado && pacienteSeleccionado.id) {
+            formData.append('paciente_id', pacienteSeleccionado.id);
+        }
+
+        fetch('{% url "buscar_doctores" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.doctores && data.doctores.length > 0) {
+                doctorResultados.innerHTML = '';
+                
+                // Si paciente es menor, mostrar alerta de restricción
+                if (pacienteSeleccionado && pacienteSeleccionado.es_menor) {
+                    const alerta = document.createElement('div');
+                    alerta.className = 'dropdown-item-search';
+                    alerta.style.backgroundColor = '#fff3cd';
+                    alerta.style.borderBottom = '1px solid #ffc107';
+                    alerta.innerHTML = '<strong style="color: #856404;"><i class="bi bi-info-circle"></i> Paciente Menor de Edad</strong><small style="color: #856404; display: block; margin-top: 0.25rem;">Solo se pueden agendar citas con especialistas en Pediatría</small>';
+                    doctorResultados.appendChild(alerta);
+                }
+                
+                data.doctores.forEach((doctor) => {
+                    const item = document.createElement('div');
+                    item.className = 'dropdown-item-search';
+                    item.innerHTML = `
+                        <strong>Dr. ${doctor.nombre}</strong>
+                        <small>Especialidad: ${doctor.especialidad}</small>
+                    `;
+                    item.addEventListener('click', () => {
+                        seleccionarDoctor(doctor);
+                    });
+                    doctorResultados.appendChild(item);
+                });
+                doctorDropdown.style.display = 'block';
+            } else {
+                doctorResultados.innerHTML = '';
+                let mensaje = 'No se encontraron médicos';
+                if (pacienteSeleccionado && pacienteSeleccionado.es_menor) {
+                    mensaje = '<i class="bi bi-exclamation-triangle"></i> No hay especialistas en Pediatría disponibles';
+                }
+                const item = document.createElement('div');
+                item.className = 'dropdown-item-search text-muted';
+                item.innerHTML = mensaje;
+                doctorResultados.appendChild(item);
+                doctorDropdown.style.display = 'block';
+            }
+        })
+        .catch(error => console.error('Error al buscar doctores:', error));
+    }
+
+    function seleccionarDoctor(doctor) {
+        doctorSeleccionado = doctor;
+        doctor_idInput.value = doctor.id;
+        nombreDoctorInput.value = doctor.nombre;
+        doctorDropdown.style.display = 'none';
+        
+        // Mostrar información
+        document.getElementById('doctorInfo').style.display = 'block';
+        document.getElementById('doctorName').textContent = `Dr. ${doctor.nombre}`;
+        document.getElementById('doctorSpecialty').textContent = doctor.especialidad;
+        document.getElementById('resumenDoctor').textContent = `Dr. ${doctor.nombre}`;
+        document.getElementById('resumenDoctor').classList.remove('text-muted');
+    }
+
+    // ====== BÚSQUEDA DE HORAS DISPONIBLES ======
+    fechaInput.addEventListener('change', function() {
+        const fecha = this.value;
+        if (fecha && doctorSeleccionado && doctorSeleccionado.id) {
+            document.getElementById('resumenFecha').textContent = new Date(fecha).toLocaleDateString('es-ES', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('resumenFecha').classList.remove('text-muted');
+            
+            // Obtener horas disponibles por AJAX
+            fetch('{% url "obtener_horas" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: new URLSearchParams({
+                    'doctor_id': doctorSeleccionado.id,
+                    'fecha': fecha
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.horas && data.horas.length > 0) {
+                    horaSelect.disabled = false;
+                    horaSelect.innerHTML = '<option value="">Seleccione una hora</option>';
+                    data.horas.forEach(hora => {
+                        const option = document.createElement('option');
+                        option.value = hora;
+                        option.textContent = hora;
+                        horaSelect.appendChild(option);
+                    });
+                    document.getElementById('horasInfo').style.display = 'block';
+                    document.getElementById('horasCount').textContent = data.horas.length;
+                } else {
+                    horaSelect.disabled = true;
+                    horaSelect.innerHTML = '<option value="">No hay horas disponibles</option>';
+                    document.getElementById('horasInfo').style.display = 'block';
+                    document.getElementById('horasCount').textContent = '0';
+                }
+            })
+            .catch(error => console.error('Error al obtener horas:', error));
+        }
+    });
+
+    // Actualizar resumen de hora
+    horaSelect.addEventListener('change', function() {
+        if (this.value) {
+            document.getElementById('resumenHora').textContent = this.value;
+            document.getElementById('resumenHora').classList.remove('text-muted');
+        }
+    });
+
+    // Cerrar dropdown al hacer clic fuera
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('#cedula_paciente') && !event.target.closest('#togglePacienteDropdown') && !event.target.closest('#pacienteDropdown')) {
+            pacienteDropdown.style.display = 'none';
+        }
+        if (!event.target.closest('#nombre_doctor') && !event.target.closest('#toggleDoctorDropdown') && !event.target.closest('#doctorDropdown')) {
+            doctorDropdown.style.display = 'none';
+        }
+    });
+
+    // ====== BOTONES DESPLEGABLES ======
+    const togglePacienteBtn = document.getElementById('togglePacienteDropdown');
+    const toggleDoctorBtn = document.getElementById('toggleDoctorDropdown');
+
+    // Data de todos los pacientes y doctores para los dropdowns
+    const todosPacientes = [
+        {% for p in todos_pacientes %}
+        {
+            id: {{ p.id }},
+            nombre: '{{ p.nombre_completo }}',
+            documento: '{{ p.documento_identidad }}',
+            telefono: '{{ p.telefono }}',
+            es_menor: {{ p.es_menor_de_edad|lower }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    const todosDoctores = [
+        {% for d in todos_doctores %}
+        {
+            id: {{ d.id }},
+            nombre: '{{ d.nombre }}',
+            especialidad: '{{ d.get_especialidad_display }}'
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    // Reemplazar búsqueda de todos los pacientes en el botón
+    togglePacienteBtn.onclick = function() {
+        if (pacienteDropdown.style.display === 'none' || pacienteDropdown.style.display === '') {
+            pacienteResultados.innerHTML = '';
+            todosPacientes.forEach((paciente) => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item-search';
+                item.innerHTML = `
+                    <strong>${paciente.nombre} - ${paciente.documento}</strong>
+                    <small>Teléfono: ${paciente.telefono || 'N/A'}</small>
+                `;
+                item.addEventListener('click', () => {
+                    seleccionarPaciente(paciente);
+                });
+                pacienteResultados.appendChild(item);
+            });
+            pacienteDropdown.style.display = 'block';
+        } else {
+            pacienteDropdown.style.display = 'none';
+        }
+    };
+
+    // Reemplazar búsqueda de todos los doctores en el botón
+    toggleDoctorBtn.onclick = function() {
+        if (doctorDropdown.style.display === 'none' || doctorDropdown.style.display === '') {
+            doctorResultados.innerHTML = '';
+            
+            // Filtrar doctores según la edad del paciente seleccionado
+            let doctoresAMostrar = todosDoctores;
+            let mensajeFiltro = '';
+            
+            if (pacienteSeleccionado && pacienteSeleccionado.id) {
+                if (pacienteSeleccionado.es_menor) {
+                    // Menor de edad: solo pediatría
+                    doctoresAMostrar = todosDoctores.filter(d => d.especialidad === 'Pediatría');
+                    mensajeFiltro = '<div class="dropdown-item-search" style="background: #fff3cd; border-bottom: 1px solid #ffc107; padding: 0.75rem 1rem;"><strong style="color: #856404;"><i class="bi bi-info-circle"></i> Paciente Menor de Edad</strong><small style="color: #856404; display: block; margin-top: 0.25rem;">Solo se pueden agendar citas con especialistas en Pediatría</small></div>';
+                } else {
+                    // Adulto: medicina general y odontología
+                    doctoresAMostrar = todosDoctores.filter(d => d.especialidad !== 'Pediatría');
+                }
+            }
+            
+            if (mensajeFiltro) {
+                pacienteResultados.innerHTML = mensajeFiltro;
+            }
+            
+            if (doctoresAMostrar && doctoresAMostrar.length > 0) {
+                doctoresAMostrar.forEach((doctor) => {
+                    const item = document.createElement('div');
+                    item.className = 'dropdown-item-search';
+                    item.innerHTML = `
+                        <strong>Dr. ${doctor.nombre}</strong>
+                        <small>Especialidad: ${doctor.especialidad}</small>
+                    `;
+                    item.addEventListener('click', () => {
+                        seleccionarDoctor(doctor);
+                    });
+                    doctorResultados.appendChild(item);
+                });
+            } else if (!pacienteSeleccionado || !pacienteSeleccionado.id) {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item-search text-muted';
+                item.innerHTML = '<i class="bi bi-info-circle"></i> Seleccione un paciente primero para ver los médicos disponibles';
+                doctorResultados.appendChild(item);
+            } else {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item-search text-muted';
+                item.innerHTML = '<i class="bi bi-info-circle"></i> No hay médicos disponibles para este paciente';
+                doctorResultados.appendChild(item);
+            }
+            
+            doctorDropdown.style.display = 'block';
+        } else {
+            doctorDropdown.style.display = 'none';
+        }
+    };
+
+    // Mostrar información si ya fue seleccionado previamente
+    {% if paciente %}
+    seleccionarPaciente({
+        id: {{ paciente.id }},
+        nombre: '{{ paciente.nombre_completo }}',
+        documento: '{{ paciente.documento_identidad }}',
+        telefono: '{{ paciente.telefono }}',
+        es_menor: {{ paciente.es_menor_de_edad|lower }}
+    });
+    {% endif %}
+
+    {% if doctor %}
+    seleccionarDoctor({
+        id: {{ doctor.id }},
+        nombre: '{{ doctor.nombre }}',
+        especialidad: '{{ doctor.get_especialidad_display }}'
+    });
+    {% endif %}
+})();
+</script>
+{% endblock %}

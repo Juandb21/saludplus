@@ -1,0 +1,258 @@
+{% extends "citas/base.html" %}
+
+{% block title %}Clínica SaludPlus - Acceso{% endblock %}
+
+{% block content %}
+<style>
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 200px);
+    }
+    
+    .login-card {
+        width: 100%;
+        max-width: 450px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        padding: 50px 40px;
+    }
+    
+    .logo-section {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    
+    .logo-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #E91E63 0%, #C2185B 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 2.5rem;
+        color: white;
+    }
+    
+    .login-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 5px;
+    }
+    
+    .login-subtitle {
+        font-size: 14px;
+        color: #6B7280;
+        margin-bottom: 30px;
+    }
+    
+    .form-section {
+        text-align: center;
+    }
+    
+    .btn-group-custom {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 30px;
+    }
+    
+    .btn-group-custom label {
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .btn-group-custom input[type="radio"] {
+        display: none;
+    }
+    
+    .btn-group-custom label span {
+        display: block;
+        padding: 12px 20px;
+        border: 2px solid #E5E7EB;
+        border-radius: 8px;
+        background: white;
+        color: #6B7280;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+    
+    .btn-group-custom input[type="radio"]:checked + span {
+        background: #FCE4EC;
+        border-color: #E91E63;
+        color: #E91E63;
+    }
+    
+    .form-group {
+        margin-bottom: 16px;
+        text-align: left;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #D1D5DB;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+        transition: border-color 0.3s;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: #E91E63;
+        box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+    }
+    
+    .btn-submit {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #E91E63 0%, #C2185B 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 10px;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(233, 30, 99, 0.3);
+    }
+    
+    .form-footer {
+        margin-top: 24px;
+        font-size: 13px;
+        color: #6B7280;
+    }
+    
+    .alert-error {
+        background: #FEE2E2;
+        color: #DC2626;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 13px;
+    }
+    
+    #personalFields,
+    #pacienteFields {
+        transition: all 0.3s ease;
+    }
+</style>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="logo-section">
+            <div class="logo-icon">
+                <i class="bi bi-hospital"></i>
+            </div>
+            <h1 class="login-title">Clínica SaludPlus</h1>
+            <p class="login-subtitle">Sistema de Gestión de Citas Médicas</p>
+        </div>
+
+        {% if form.non_field_errors %}
+            <div class="alert-error">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" id="loginForm" class="form-section">
+            {% csrf_token %}
+
+            <div class="btn-group-custom">
+                <label>
+                    <input type="radio" name="tipo_usuario" value="personal" checked>
+                    <span>Personal</span>
+                </label>
+                <label>
+                    <input type="radio" name="tipo_usuario" value="paciente">
+                    <span>Pacientes</span>
+                </label>
+            </div>
+
+            <!-- Formulario Personal -->
+            <div id="personalFields">
+                <div class="form-group">
+                    <label class="form-label">Usuario</label>
+                    <input type="text" name="usuario" class="form-input" placeholder="Ingrese su usuario" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Contraseña</label>
+                    <input type="password" name="contraseña" class="form-input" placeholder="Ingrese su contraseña" required>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                </button>
+            </div>
+
+            <!-- Formulario Paciente -->
+            <div id="pacienteFields" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label">Número de Cédula</label>
+                    <input type="text" name="cedula" class="form-input" placeholder="Ingrese su número de cédula">
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    <i class="bi bi-search"></i> Consultar Mis Citas
+                </button>
+            </div>
+
+            <div class="form-footer">
+                Si no está registrado, acérquese a recepción
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const radioButtons = document.querySelectorAll('input[name="tipo_usuario"]');
+    const personalFields = document.getElementById('personalFields');
+    const pacienteFields = document.getElementById('pacienteFields');
+    const form = document.getElementById('loginForm');
+
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'paciente') {
+                personalFields.style.display = 'none';
+                pacienteFields.style.display = 'block';
+                // Cambiar validación
+                form.querySelectorAll('input[type="text"], input[type="password"]').forEach(input => {
+                    input.removeAttribute('required');
+                });
+                form.querySelector('input[name="cedula"]').setAttribute('required', 'required');
+            } else {
+                personalFields.style.display = 'block';
+                pacienteFields.style.display = 'none';
+                // Cambiar validación
+                form.querySelectorAll('input[type="text"], input[type="password"]').forEach(input => {
+                    input.setAttribute('required', 'required');
+                });
+                form.querySelector('input[name="cedula"]').removeAttribute('required');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

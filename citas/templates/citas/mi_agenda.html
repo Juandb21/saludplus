@@ -1,0 +1,171 @@
+{% extends "citas/base.html" %}
+
+{% block title %}Mi Agenda - Clínica SaludPlus{% endblock %}
+
+{% block extra_css %}
+<style>
+    .agenda-page .section-card {
+        border: 1px solid #dbe3ef;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+    }
+
+    .agenda-page .hero-card {
+        border-radius: 16px;
+        background: linear-gradient(135deg, #DC2626 0%, #B91C1C 60%, #991B1B 100%);
+        color: #ffffff;
+        padding: 1.5rem;
+    }
+
+    .agenda-page .hero-muted {
+        color: rgba(255, 255, 255, 0.86);
+    }
+
+    .agenda-page .schedule-line {
+        margin-bottom: 0.35rem;
+        font-size: 0.98rem;
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+    .agenda-page .date-box {
+        border: 1px solid #dbe3ef;
+        border-radius: 12px;
+        max-width: 220px;
+    }
+
+    .agenda-page .day-counter {
+        text-align: right;
+        color: #334155;
+    }
+
+    .agenda-page .agenda-empty {
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+    }
+
+    .agenda-page .agenda-empty i {
+        font-size: 3.5rem;
+        color: #cbd5e1;
+        margin-bottom: 0.75rem;
+    }
+
+    @media (max-width: 768px) {
+        .agenda-page .day-counter {
+            text-align: left;
+        }
+
+        .agenda-page .date-box {
+            max-width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="agenda-page">
+    <div class="mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width:42px;height:42px;border-radius:12px;background:#DC2626;color:white;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-person-badge"></i>
+            </div>
+            <div>
+                <h1 class="mb-0" style="font-weight:700;">Mi Agenda Médica</h1>
+                <p class="text-muted mb-0">Dr. {{ doctor.nombre }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero-card mb-4">
+        <div class="row align-items-start g-3">
+            <div class="col-md-7">
+                <h2 class="mb-1" style="font-weight:700;">Dr. {{ doctor.nombre }}</h2>
+                <div class="hero-muted" style="font-size:1.25rem;">{{ doctor.get_especialidad_display }}</div>
+            </div>
+            <div class="col-md-5 text-md-end">
+                <div style="font-size:1.25rem;font-weight:600;" class="mb-1">Horarios de Atención</div>
+                {% for horario in horarios_doctor %}
+                    <div class="schedule-line">
+                        {{ horario.get_dia_semana_display }}: {{ horario.hora_inicio|time:"H:i" }} - {{ horario.hora_fin|time:"H:i" }}
+                    </div>
+                {% empty %}
+                    <div class="schedule-line">Sin horarios configurados</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="section-card mb-4 p-4">
+        <form method="get" class="row align-items-end g-3">
+            <div class="col-md-8">
+                <label for="fecha" class="form-label fw-semibold">Seleccionar Fecha</label>
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-calendar3" style="font-size:1.4rem;color:#334155;"></i>
+                    <input
+                        type="date"
+                        class="form-control date-box"
+                        id="fecha"
+                        name="fecha"
+                        value="{{ fecha|date:'Y-m-d' }}"
+                        onchange="this.form.submit()"
+                    >
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="day-counter">
+                    <div style="font-size:1.2rem;">Citas del Día</div>
+                    <div style="font-size:2.6rem;font-weight:700;line-height:1;">{{ citas_dia|length }}</div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="section-card">
+        <div class="card-header bg-white" style="padding:1.3rem 1.5rem;border-bottom:1px solid #e2e8f0;">
+            <h5 class="mb-0" style="font-size:2rem;font-weight:700;">
+                Agenda del {{ fecha|date:"l, d \d\e F \d\e Y" }}
+            </h5>
+        </div>
+        <div class="card-body" style="padding:1.5rem;">
+            {% if citas_dia %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Paciente</th>
+                                <th>Documento</th>
+                                <th>Teléfono</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cita in citas_dia %}
+                                <tr>
+                                    <td><strong>{{ cita.hora|time:"H:i" }}</strong></td>
+                                    <td>{{ cita.paciente.nombre_completo }}</td>
+                                    <td>{{ cita.paciente.documento_identidad }}</td>
+                                    <td>{{ cita.paciente.telefono }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ cita.estado }}">{{ cita.get_estado_display }}</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="agenda-empty">
+                    <i class="bi bi-calendar2-x"></i>
+                    <p class="mb-0" style="font-size:1.6rem;">No hay citas programadas para este día</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

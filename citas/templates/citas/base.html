@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Clínica SaludPlus{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #E91E63;
+            --secondary-color: #C2185B;
+            --danger-color: #DC2626;
+            --light-bg: #F3F4F6;
+        }
+
+        body {
+            background: #f5f5dc;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color) !important;
+            font-size: 1.5rem;
+        }
+
+        .navbar-brand span {
+            color: var(--secondary-color);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #C2185B;
+            border-color: #C2185B;
+        }
+
+        .btn-outline-primary {
+            color: #DC2626;
+            border-color: #DC2626;
+        }
+
+        .btn-outline-primary:hover {
+            background-color: #DC2626;
+            color: white;
+            border-color: #DC2626;
+        }
+
+        .btn-success {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-success:hover {
+            background-color: #E91E63;
+            border-color: #E91E63;
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Stat Cards */
+        .stat-card {
+            padding: 30px;
+            border-radius: 12px;
+            background: white;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            color: #6B7280;
+            margin-top: 10px;
+            font-size: 0.95rem;
+        }
+
+        /* Forms */
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #E5E7EB;
+            padding: 10px 12px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.25);
+        }
+
+        /* Tabs */
+        .nav-tabs {
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .nav-tabs .nav-link {
+            color: #6B7280;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            background: none;
+        }
+
+        /* Badges */
+        .badge-programada {
+            background-color: #FEE2E2;
+            color: var(--danger-color);
+            font-weight: 500;
+        }
+
+        .badge-confirmada {
+            background-color: #FEE2E2;
+            color: var(--danger-color);
+            font-weight: 500;
+        }
+
+        .badge-realizada {
+            background-color: #FEE2E2;
+            color: var(--danger-color);
+            font-weight: 500;
+        }
+
+        .badge-cancelada {
+            background-color: #FEE2E2;
+            color: var(--danger-color);
+            font-weight: 500;
+        }
+
+        /* Tables */
+        .table {
+            background: white;
+            border-radius: 8px;
+            border-collapse: collapse;
+        }
+
+        .table thead th {
+            background-color: #F9FAFB;
+            border-bottom: 2px solid #E5E7EB;
+            font-weight: 600;
+            color: #374151;
+            padding: 15px;
+        }
+
+        .table tbody td {
+            padding: 15px;
+            border-bottom: 1px solid #E5E7EB;
+            vertical-align: middle;
+        }
+
+        /* Alerts */
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+
+        /* Main content */
+        main {
+            flex: 1;
+        }
+
+        /* Footer */
+        footer {
+            background: white;
+            padding: 20px 0;
+            margin-top: 40px;
+            text-align: center;
+            color: #6B7280;
+            border-top: 1px solid #E5E7EB;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stat-number {
+                font-size: 2rem;
+            }
+        }
+
+        /* Wrapper for layout */
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            flex: 1;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        {% block navbar_content %}
+            <div class="container">
+                <a class="navbar-brand" href="/">
+                    <i class="bi bi-hospital"></i> Clínica <span>SaludPlus</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        {% if user.is_authenticated %}
+                            {% if user.groups.all.0.name == "Recepcionista" %}
+                                <li class="nav-item"><a class="nav-link" href="{% url 'recepcion' %}">Recepción</a></li>
+                            {% elif user.groups.all.0.name == "Doctor" %}
+                                <li class="nav-item"><a class="nav-link" href="{% url 'mi_agenda' %}">Mi Agenda</a></li>
+                            {% elif user.groups.all.0.name == "Administrador" %}
+                                <li class="nav-item"><a class="nav-link" href="{% url 'admin_panel' %}">Admin</a></li>
+                            {% endif %}
+                            <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Cerrar Sesión</a></li>
+                        {% elif request.session.paciente_id %}
+                            <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Cerrar Sesión</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        {% endblock %}
+    </nav>
+
+    <main class="py-4">
+        <div class="container">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer>
+        <p class="mb-0">&copy; 2026 Clínica SaludPlus. Sistema de Gestión de Citas Médicas.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
