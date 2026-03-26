@@ -282,6 +282,122 @@
             {% endif %}
         </div>
     </div>
+
+    <div class="card section-card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0" style="font-weight:700;">Gestión de Recepcionistas</h4>
+            <button id="toggleRegistroRecepcionista" class="btn btn-outline-primary" type="button" style="border-radius:12px;padding:0.6rem 1.1rem;font-weight:600;">
+                <i class="bi bi-person-plus"></i> Agregar Recepcionista
+            </button>
+        </div>
+
+        <div id="registroRecepcionistaPanel" class="register-panel d-none">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_recepcionista">
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Nombre completo *</label>
+                        <input type="text" class="form-control" name="nombre" placeholder="María López" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Correo electrónico *</label>
+                        <input type="email" class="form-control" name="correo" placeholder="recepcionista@saludplus.com" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Usuario *</label>
+                        <input type="text" class="form-control" name="username" placeholder="maria.lopez" autocomplete="off" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Contraseña *</label>
+                        <input type="password" class="form-control" name="password" placeholder="Mínimo 6 caracteres" minlength="6" required>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-4 pt-3 border-top">
+                    <button type="submit" class="btn btn-primary px-4" style="font-weight:600;">Registrar Recepcionista</button>
+                    <button id="cancelarRegistroRecepcionista" type="button" class="btn btn-secondary">Cancelar</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card-body p-0">
+            {% if recepcionistas %}
+                {% for recep in recepcionistas %}
+                    <div class="doctor-row {% if not forloop.last %}border-bottom{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                            <div>
+                                <div class="d-flex align-items-center mb-1 flex-wrap gap-2">
+                                    <span style="font-weight:700;font-size:1.2rem;color:#111827;line-height:1.1;">
+                                        {{ recep.first_name }}{% if recep.last_name %} {{ recep.last_name }}{% endif %}
+                                    </span>
+                                    <span class="badge" style="background:#FCE4EC;color:#E91E63;font-weight:600;border-radius:999px;font-size:0.85rem;padding:4px 9px;">
+                                        Recepcionista
+                                    </span>
+                                </div>
+                                <div class="text-muted" style="font-size:0.9rem;">
+                                    <i class="bi bi-envelope me-1"></i>{{ recep.email|default:'Sin correo' }}
+                                    <span class="ms-3"><i class="bi bi-person me-1"></i>{{ recep.username }}</span>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#editarRecep{{ recep.id }}" aria-expanded="false" style="border-radius:10px;">
+                                    <i class="bi bi-pencil-square"></i> Editar datos
+                                </button>
+                                <form method="post" onsubmit="return confirm('¿Eliminar este recepcionista?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_recepcionista">
+                                    <input type="hidden" name="recepcionista_id" value="{{ recep.id }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius:10px;">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="collapse mt-3" id="editarRecep{{ recep.id }}">
+                            <div class="edit-schedule-box">
+                                <div class="fw-semibold mb-2">Editar información del recepcionista</div>
+                                <form method="post" class="row g-3 align-items-end">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="update_recepcionista">
+                                    <input type="hidden" name="recepcionista_id" value="{{ recep.id }}">
+
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold mb-1">Nombre completo</label>
+                                        <input type="text" name="nombre" class="form-control" value="{{ recep.first_name }}{% if recep.last_name %} {{ recep.last_name }}{% endif %}" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold mb-1">Correo electrónico</label>
+                                        <input type="email" name="correo" class="form-control" value="{{ recep.email }}" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold mb-1">Usuario</label>
+                                        <input type="text" name="username" class="form-control" value="{{ recep.username }}" required>
+                                    </div>
+
+                                    <div class="col-md-6 mt-2">
+                                        <label class="form-label fw-semibold mb-1">Nueva contraseña (opcional)</label>
+                                        <input type="password" name="password" class="form-control" placeholder="Dejar en blanco para no cambiar">
+                                    </div>
+                                    <div class="col-md-6 mt-4 d-grid">
+                                        <button type="submit" class="btn btn-primary">
+                                            Guardar cambios
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info m-3">
+                    <i class="bi bi-info-circle"></i> No hay recepcionistas registrados.
+                </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -298,23 +414,42 @@
     const list = document.getElementById('listaHorariosNuevos');
     const hiddenInputs = document.getElementById('inputsHorariosNuevos');
 
-    if (!toggleBtn || !panel) {
-        return;
+    const toggleRecepBtn = document.getElementById('toggleRegistroRecepcionista');
+    const recepPanel = document.getElementById('registroRecepcionistaPanel');
+    const cancelRecepBtn = document.getElementById('cancelarRegistroRecepcionista');
+
+    if (toggleBtn && panel) {
+        const setPanelState = (open) => {
+            panel.classList.toggle('d-none', !open);
+            toggleBtn.innerHTML = open
+                ? '<i class="bi bi-x-lg"></i> Cerrar registro'
+                : '<i class="bi bi-person-plus"></i> Agregar Médico';
+        };
+
+        toggleBtn.addEventListener('click', () => {
+            setPanelState(panel.classList.contains('d-none'));
+        });
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => setPanelState(false));
+        }
     }
 
-    const setPanelState = (open) => {
-        panel.classList.toggle('d-none', !open);
-        toggleBtn.innerHTML = open
-            ? '<i class="bi bi-x-lg"></i> Cerrar registro'
-            : '<i class="bi bi-person-plus"></i> Agregar Médico';
-    };
+    if (toggleRecepBtn && recepPanel) {
+        const setRecepPanelState = (open) => {
+            recepPanel.classList.toggle('d-none', !open);
+            toggleRecepBtn.innerHTML = open
+                ? '<i class="bi bi-x-lg"></i> Cerrar registro'
+                : '<i class="bi bi-person-plus"></i> Agregar Recepcionista';
+        };
 
-    toggleBtn.addEventListener('click', () => {
-        setPanelState(panel.classList.contains('d-none'));
-    });
+        toggleRecepBtn.addEventListener('click', () => {
+            setRecepPanelState(recepPanel.classList.contains('d-none'));
+        });
 
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', () => setPanelState(false));
+        if (cancelRecepBtn) {
+            cancelRecepBtn.addEventListener('click', () => setRecepPanelState(false));
+        }
     }
 
     const buildScheduleText = (dayValue, start, end) => {

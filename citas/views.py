@@ -418,6 +418,43 @@ def admin_panel(request):
 
             return redirect('admin_panel')
 
+        if action == 'create_recepcionista':
+            nombre = (request.POST.get('nombre') or '').strip()
+            correo = (request.POST.get('correo') or '').strip()
+            username = (request.POST.get('username') or '').strip()
+            password = request.POST.get('password') or ''
+
+            if not nombre or not correo or not username or not password:
+                messages.error(request, 'Debe completar nombre, correo, usuario y contraseña del recepcionista.')
+                return redirect('admin_panel')
+
+            if User.objects.filter(username=username).exists():
+                messages.error(request, 'El nombre de usuario ya existe. Elija otro usuario para el recepcionista.')
+                return redirect('admin_panel')
+
+            if len(password) < 6:
+                messages.error(request, 'La contraseña debe tener al menos 6 caracteres.')
+                return redirect('admin_panel')
+
+            nombres = nombre.split(' ', 1)
+            first_name = nombres[0]
+            last_name = nombres[1] if len(nombres) > 1 else ''
+
+            with transaction.atomic():
+                recep_user = User.objects.create_user(
+                    username=username,
+                    password=password,
+                    email=correo,
+                    first_name=first_name,
+                    last_name=last_name,
+                )
+
+                recep_group, _ = Group.objects.get_or_create(name='Recepcionista')
+                recep_user.groups.add(recep_group)
+
+            messages.success(request, 'Recepcionista creado correctamente.')
+            return redirect('admin_panel')
+
         if action == 'create_horario':
             doctor_id = request.POST.get('doctor_id')
             dia = request.POST.get('dia_semana')
@@ -493,6 +530,56 @@ def admin_panel(request):
             messages.success(request, 'Día eliminado del horario del médico.')
             return redirect('admin_panel')
 
+        if action == 'update_recepcionista':
+            recep_id = request.POST.get('recepcionista_id')
+            nombre = (request.POST.get('nombre') or '').strip()
+            correo = (request.POST.get('correo') or '').strip()
+            username = (request.POST.get('username') or '').strip()
+            password = request.POST.get('password') or ''
+
+            if not recep_id:
+                messages.error(request, 'Recepcionista no válido.')
+                return redirect('admin_panel')
+
+            recep_user = get_object_or_404(User, id=recep_id)
+
+            if not nombre or not correo or not username:
+                messages.error(request, 'Debe completar nombre, correo y usuario del recepcionista.')
+                return redirect('admin_panel')
+
+            # Verificar cambio de username
+            if User.objects.filter(username=username).exclude(id=recep_user.id).exists():
+                messages.error(request, 'El nombre de usuario ya está en uso por otro usuario.')
+                return redirect('admin_panel')
+
+            nombres = nombre.split(' ', 1)
+            recep_user.first_name = nombres[0]
+            recep_user.last_name = nombres[1] if len(nombres) > 1 else ''
+            recep_user.email = correo
+            recep_user.username = username
+
+            if password:
+                if len(password) < 6:
+                    messages.error(request, 'La nueva contraseña debe tener al menos 6 caracteres.')
+                    return redirect('admin_panel')
+                recep_user.set_password(password)
+
+            recep_user.save()
+            messages.success(request, 'Recepcionista actualizado correctamente.')
+            return redirect('admin_panel')
+
+        if action == 'delete_recepcionista':
+            recep_id = request.POST.get('recepcionista_id')
+
+            if not recep_id:
+                messages.error(request, 'Recepcionista no válido.')
+                return redirect('admin_panel')
+
+            recep_user = get_object_or_404(User, id=recep_id)
+            recep_user.delete()
+            messages.success(request, 'Recepcionista eliminado correctamente.')
+            return redirect('admin_panel')
+
         messages.error(request, 'Acción no válida.')
         return redirect('admin_panel')
     
@@ -501,12 +588,16 @@ def admin_panel(request):
     citas_programadas = Cita.objects.filter(estado='programada').count()
     
     medicos = Doctor.objects.filter(activo=True).prefetch_related('horarios')
+
+    recep_group, _ = Group.objects.get_or_create(name='Recepcionista')
+    recepcionistas = recep_group.user_set.all().order_by('first_name', 'last_name', 'username')
     
     context = {
         'total_medicos': total_medicos,
         'total_pacientes': total_pacientes,
         'citas_programadas': citas_programadas,
         'medicos': medicos,
+        'recepcionistas': recepcionistas,
     }
     
     return render(request, 'citas/admin_panel.html', context)
