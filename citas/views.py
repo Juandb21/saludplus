@@ -28,8 +28,30 @@ def index(request):
     return render(request, 'citas/index.html')
 
 
+def obtener_destino_usuario(user):
+    """Determina la vista inicial según el rol del usuario autenticado."""
+    if user.is_superuser:
+        return 'admin_panel'
+    if user.groups.filter(name='Recepcionista').exists():
+        return 'recepcion'
+    if user.groups.filter(name='Doctor').exists():
+        return 'mi_agenda'
+    if user.groups.filter(name='Administrador').exists():
+        return 'admin_panel'
+    return None
+
+
 def login_view(request):
     """Vista de login"""
+    if request.user.is_authenticated:
+        destino = obtener_destino_usuario(request.user)
+        if destino:
+            return redirect(destino)
+
+        # Evita sesiones activas de usuarios sin rol asignado.
+        logout(request)
+        messages.error(request, 'Tu usuario no tiene un rol asignado. Contacta al administrador.')
+
     if request.method == 'POST':
         form = LoginFormulario(request.POST)
         if form.is_valid():
@@ -41,16 +63,12 @@ def login_view(request):
                 
                 user = authenticate(request, username=usuario, password=contraseña)
                 if user is not None:
-                    login(request, user)
-                    # Redirigir según el grupo del usuario
-                    if user.groups.filter(name='Recepcionista').exists():
-                        return redirect('recepcion')
-                    elif user.groups.filter(name='Doctor').exists():
-                        return redirect('mi_agenda')
-                    elif user.groups.filter(name='Administrador').exists():
-                        return redirect('admin_panel')
-                    else:
-                        return redirect('recepcion')
+                    destino = obtener_destino_usuario(user)
+                    if destino:
+                        login(request, user)
+                        return redirect(destino)
+
+                    form.add_error(None, 'Usuario sin rol asignado. Contacta al administrador.')
                 else:
                     form.add_error(None, 'Usuario o contraseña incorrectos')
             
@@ -292,7 +310,7 @@ def generar_horas_disponibles(doctor, fecha, horario):
 def mi_agenda(request):
     """Agenda del doctor"""
     user = request.user
-    if not user.groups.filter(name='Doctor').exists():
+    if not user.is_superuser and not user.groups.filter(name='Doctor').exists():
         return redirect('index')
     
     try:
@@ -336,7 +354,7 @@ def mi_agenda(request):
 def admin_panel(request):
     """Panel de administración"""
     user = request.user
-    if not user.groups.filter(name='Administrador').exists():
+    if not user.is_superuser and not user.groups.filter(name='Administrador').exists():
         return redirect('index')
 
     if request.method == 'POST':
