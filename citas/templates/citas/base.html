@@ -234,11 +234,7 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
                         {% if user.is_authenticated %}
-                            {% if user.groups.all.0.name == "Recepcionista" %}
-                                <li class="nav-item"><a class="nav-link" href="{% url 'recepcion' %}">Recepción</a></li>
-                            {% elif user.groups.all.0.name == "Doctor" %}
-                                <li class="nav-item"><a class="nav-link" href="{% url 'mi_agenda' %}">Mi Agenda</a></li>
-                            {% elif user.groups.all.0.name == "Administrador" %}
+                            {% if user.is_superuser or user.groups.all.0.name == "Administrador" %}
                                 <li class="nav-item"><a class="nav-link" href="{% url 'admin_panel' %}">Admin</a></li>
                             {% endif %}
                             <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Cerrar Sesión</a></li>

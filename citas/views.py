@@ -136,8 +136,11 @@ def recepcion(request):
     medicos_disponibles = Doctor.objects.filter(activo=True).order_by('nombre')
     pacientes_disponibles = Paciente.objects.all().order_by('nombre_completo')
     
-    # Todas las citas
-    todas_citas = Cita.objects.all().select_related('paciente', 'doctor')
+    # Mostrar solo próximas citas activas para evitar confusión con citas vencidas.
+    todas_citas = Cita.objects.filter(
+        filtro_citas_futuras(),
+        estado__in=['programada', 'confirmada']
+    ).select_related('paciente', 'doctor').order_by('fecha', 'hora')
     
     context = {
         'citas_hoy': citas_hoy,
