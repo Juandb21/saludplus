@@ -8,6 +8,7 @@ from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.db import transaction
 from django.db.models import Q
+from django.utils import timezone
 from datetime import datetime, timedelta
 import json
 
@@ -25,7 +26,23 @@ def hora_en_punto(hora):
 
 def es_hora_futura(fecha, hora):
     """Valida que una fecha/hora no esté en el pasado."""
-    return datetime.combine(fecha, hora) > datetime.now()
+    ahora_local = timezone.localtime()
+    fecha_actual = ahora_local.date()
+    hora_actual = ahora_local.time().replace(second=0, microsecond=0)
+
+    if fecha > fecha_actual:
+        return True
+    if fecha < fecha_actual:
+        return False
+    return hora > hora_actual
+
+
+def filtro_citas_futuras():
+    """Retorna filtro de citas realmente futuras según hora local."""
+    ahora_local = timezone.localtime()
+    fecha_actual = ahora_local.date()
+    hora_actual = ahora_local.time().replace(second=0, microsecond=0)
+    return Q(fecha__gt=fecha_actual) | Q(fecha=fecha_actual, hora__gt=hora_actual)
 
 
 def index(request):
@@ -142,7 +159,10 @@ def consultar_citas(request):
         return redirect('index')
     
     paciente = get_object_or_404(Paciente, id=paciente_id)
-    citas = paciente.citas.all().order_by('-fecha', '-hora')
+    citas = paciente.citas.filter(
+        filtro_citas_futuras(),
+        estado__in=['programada', 'confirmada']
+    ).order_by('fecha', 'hora')
     
     context = {
         'paciente': paciente,
@@ -637,7 +657,10 @@ def mis_citas(request):
         return redirect('index')
     
     paciente = get_object_or_404(Paciente, id=paciente_id)
-    citas = paciente.citas.all().order_by('-fecha', '-hora')
+    citas = paciente.citas.filter(
+        filtro_citas_futuras(),
+        estado__in=['programada', 'confirmada']
+    ).order_by('fecha', 'hora')
     
     context = {
         'paciente': paciente,
