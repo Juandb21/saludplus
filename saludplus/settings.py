@@ -14,6 +14,15 @@ from pathlib import Path
 import os
 from decouple import config
 
+
+def _sanitize_host(raw_host):
+    host = raw_host.strip().lower()
+    if not host:
+        return ''
+    host = host.replace('https://', '').replace('http://', '')
+    host = host.split('/')[0].split(':')[0]
+    return host
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,7 +36,15 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-9(k=-bvw0*c^wu&p)hly)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+raw_hosts = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,.onrender.com').split(',')
+allowed_hosts = [_sanitize_host(host) for host in raw_hosts]
+
+render_hostname = _sanitize_host(config('RENDER_EXTERNAL_HOSTNAME', default=''))
+if render_hostname:
+    allowed_hosts.append(render_hostname)
+
+ALLOWED_HOSTS = [host for host in allowed_hosts if host]
+CSRF_TRUSTED_ORIGINS = [f'https://{host}' for host in ALLOWED_HOSTS if host != 'localhost']
 
 
 # Application definition
