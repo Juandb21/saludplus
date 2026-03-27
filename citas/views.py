@@ -23,6 +23,11 @@ def hora_en_punto(hora):
     return hora.minute == 0 and hora.second == 0
 
 
+def es_hora_futura(fecha, hora):
+    """Valida que una fecha/hora no esté en el pasado."""
+    return datetime.combine(fecha, hora) > datetime.now()
+
+
 def index(request):
     """Página de inicio"""
     return render(request, 'citas/index.html')
@@ -250,6 +255,10 @@ def agendar_cita(request):
         # Si tenemos todos los datos, agendar
         if paciente and doctor and fecha and hora:
             hora_obj = datetime.strptime(hora, '%H:%M').time()
+
+            if not es_hora_futura(fecha, hora_obj):
+                messages.error(request, 'Solo puedes agendar horas futuras para el día de hoy.')
+                return redirect('recepcion')
             
             # Verificar que la hora está disponible
             if not Cita.objects.filter(doctor=doctor, fecha=fecha, hora=hora_obj).exists():
@@ -295,7 +304,7 @@ def generar_horas_disponibles(doctor, fecha, horario):
     ).values_list('hora', flat=True)
     
     while hora_actual < horario.hora_fin:
-        if hora_actual not in citas_existentes:
+        if hora_actual not in citas_existentes and es_hora_futura(fecha, hora_actual):
             horas_disponibles.append(hora_actual.strftime('%H:%M'))
         
         # Sumar 30 minutos
@@ -761,6 +770,9 @@ def editar_cita(request, cita_id):
             hora = datetime.strptime(hora_str, '%H:%M').time()
         except ValueError:
             return JsonResponse({'error': 'Hora inválida.'}, status=400)
+
+        if not es_hora_futura(fecha, hora):
+            return JsonResponse({'error': 'Solo se pueden programar horas futuras para el día de hoy.'}, status=400)
         
         # Si se proporciona doctor_id, usar ese; si no, mantener el actual
         if doctor_id:
