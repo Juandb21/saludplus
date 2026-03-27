@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: saludplus
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: bash build.sh
+    startCommand: gunicorn saludplus.wsgi:application
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: saludplus-db
+          property: connectionString
+
+databases:
+  - name: saludplus-db
+    databaseName: saludplus
+    region: oregon
+    plan: free
