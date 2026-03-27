@@ -162,7 +162,7 @@
                                     </span>
                                     <div class="action-icons">
                                         <i class="bi bi-pencil edit" title="Editar"></i>
-                                        <i class="bi bi-x-circle delete" title="Eliminar"></i>
+                                        <i class="bi bi-x-circle delete" title="Cancelar"></i>
                                     </div>
                                 </div>
 
@@ -555,7 +555,7 @@
                     const citaId = card.getAttribute('data-cita-id');
                     if (!citaId) return;
                     
-                    if (!confirm('¿Está seguro de que desea eliminar esta cita?')) {
+                    if (!confirm('¿Está seguro de que desea cancelar esta cita?')) {
                         return;
                     }
                     
@@ -568,25 +568,40 @@
                         });
                         
                         if (!response.ok) {
-                            alert('Error al eliminar la cita');
+                            const data = await response.json().catch(() => ({}));
+                            alert(data.error || 'Error al cancelar la cita');
                             return;
                         }
-                        
-                        // Remover la tarjeta de la lista
-                        card.remove();
-                        
-                        // Mostrar mensaje de éxito
+
+                        const badge = card.querySelector('.badge');
+                        if (badge) {
+                            badge.classList.remove('badge-programada', 'badge-confirmada', 'badge-realizada');
+                            badge.classList.add('badge-cancelada');
+                            badge.textContent = 'Cancelada';
+                        }
+
+                        const editBtn = card.querySelector('.edit');
+                        if (editBtn) {
+                            editBtn.style.opacity = '0.45';
+                            editBtn.style.pointerEvents = 'none';
+                            editBtn.title = 'No se puede editar una cita cancelada';
+                        }
+
+                        deleteBtn.style.opacity = '0.45';
+                        deleteBtn.style.pointerEvents = 'none';
+                        deleteBtn.title = 'Esta cita ya fue cancelada';
+
                         const alertDiv = document.createElement('div');
                         alertDiv.className = 'alert alert-success alert-dismissible fade show';
                         alertDiv.role = 'alert';
                         alertDiv.innerHTML = `
-                            <strong>Éxito!</strong> Cita eliminada correctamente.
+                            <strong>Éxito!</strong> Cita cancelada correctamente.
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         `;
                         document.getElementById('listaCitas').insertBefore(alertDiv, document.getElementById('listaCitas').firstChild);
                     } catch (error) {
                         console.error('Error:', error);
-                        alert('Error al eliminar la cita');
+                        alert('Error al cancelar la cita');
                     }
                 });
             }

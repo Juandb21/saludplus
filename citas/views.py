@@ -767,6 +767,9 @@ def editar_cita(request, cita_id):
         return redirect('index')
     
     cita = get_object_or_404(Cita, id=cita_id)
+
+    if cita.estado == 'cancelada':
+        return JsonResponse({'error': 'No se puede editar una cita cancelada.'}, status=400)
     
     if request.method == 'POST':
         # Actualizar fecha, hora y doctor
@@ -840,16 +843,20 @@ def editar_cita(request, cita_id):
 @login_required
 @require_http_methods(["POST"])
 def eliminar_cita(request, cita_id):
-    """Eliminar una cita"""
+    """Cancelar una cita sin eliminarla físicamente"""
     user = request.user
     if not user.groups.filter(name='Recepcionista').exists():
-        return JsonResponse({'error': 'No tienes permiso para eliminar citas.'}, status=403)
+        return JsonResponse({'error': 'No tienes permiso para cancelar citas.'}, status=403)
     
     cita = get_object_or_404(Cita, id=cita_id)
+
+    if cita.estado == 'cancelada':
+        return JsonResponse({'error': 'La cita ya se encuentra cancelada.'}, status=400)
     
     try:
-        cita.delete()
-        messages.success(request, 'Cita eliminada correctamente.')
+        cita.estado = 'cancelada'
+        cita.save(update_fields=['estado', 'fecha_modificacion'])
+        messages.success(request, 'Cita cancelada correctamente.')
         return JsonResponse({'success': True})
     except Exception as e:
-        return JsonResponse({'error': 'Error al eliminar la cita.'}, status=500)
+        return JsonResponse({'error': 'Error al cancelar la cita.'}, status=500)
